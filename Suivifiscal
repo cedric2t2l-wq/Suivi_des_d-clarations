@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de Dossiers Fiscaux</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Cacher toutes les pages par défaut */
+        .page {
+            display: none;
+        }
+        /* Afficher la page active */
+        .page.active {
+            display: block;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #resultat-acomptes-printable, #resultat-acomptes-printable * {
+                visibility: visible;
+            }
+            #resultat-acomptes-printable {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                color: black;
+                background-color: white !important;
+            }
+            #resultat-acomptes-printable h3, #resultat-acomptes-printable table, #resultat-acomptes-printable h2 {
+                color: black;
+            }
+             #resultat-acomptes-printable div, #resultat-acomptes-printable p {
+                background-color: white !important;
+                color: black;
+                border: 1px solid #ccc;
+             }
+            #btn-imprimer-acomptes, #btn-calculer-acomptes, #btn-raz-acomptes {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    
+    <!-- Bannière de notification -->
+    <div id="notification-banner" class="fixed top-0 left-1/2 -translate-x-1/2 bg-green-600 text-white py-2 px-6 rounded-b-lg shadow-lg z-50 transition-transform transform -translate-y-full" style="display: none;">
+        Message de notification
+    </div>
+
+    <!-- PAGE DE CONNEXION -->
+    <div id="page-login" class="min-h-screen bg-gray-900 flex flex-col justify-center items-center p-4">
+        <div class="w-full max-w-sm">
+            <h1 class="text-3xl font-bold text-center text-white mb-8">SAINT-GERMAIN AUDIT</h1>
+            <div class="bg-gray-800 p-8 rounded-lg shadow-xl">
+                <h2 class="text-2xl font-bold text-center mb-6">Connexion</h2>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="login-email" class="block mb-2 text-sm font-medium">Login (email)</label>
+                        <input type="email" id="login-email" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="login-password" class="block mb-2 text-sm font-medium">Mot de passe</label>
+                        <input type="password" id="login-password" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">Se connecter</button>
+                </form>
+                <div class="mt-6 text-center text-sm">
+                    <button id="btn-show-create-account" class="text-blue-400 hover:underline">Créer un accès</button>
+                    <span class="text-gray-500 mx-2">|</span>
+                    <button id="btn-reset-password" class="text-blue-400 hover:underline">Mot de passe oublié ?</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- PAGE DE CRÉATION DE COMPTE -->
+    <div id="page-creation-compte" class="min-h-screen bg-gray-900 flex flex-col justify-center items-center p-4" style="display: none;">
+         <div class="w-full max-w-lg">
+            <h1 class="text-3xl font-bold text-center text-white mb-8">SAINT-GERMAIN AUDIT</h1>
+            <div class="bg-gray-800 p-8 rounded-lg shadow-xl">
+                <h2 class="text-2xl font-bold text-center mb-6">Créer un nouveau compte</h2>
+                <form id="create-account-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="create-prenom" class="block mb-2 text-sm font-medium">Prénom</label>
+                            <input type="text" id="create-prenom" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg block w-full p-2.5" required>
+                        </div>
+                        <div>
+                            <label for="create-nom" class="block mb-2 text-sm font-medium">Nom</label>
+                            <input type="text" id="create-nom" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg block w-full p-2.5" required>
+                        </div>
+                        <div>
+                            <label for="create-initiales" class="block mb-2 text-sm font-medium">Initiales</label>
+                            <input type="text" id="create-initiales" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg block w-full p-2.5" required maxlength="3">
+                        </div>
+                         <div>
+                            <label for="create-email" class="block mb-2 text-sm font-medium">Email</label>
+                            <input type="email" id="create-email" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg block w-full p-2.5" required>
+                        </div>
+                        <div class="md:col-span-2">
+                             <label for="create-fonction" class="block mb-2 text-sm font-medium">Fonction</label>
+                             <select id="create-fonction" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                 <option>Collaborateur</option>
+                                 <option>Responsable</option>
+                                 <option>Associé</option>
+                             </select>
+                        </div>
+                        <div>
+                            <label for="create-password" class="block mb-2 text-sm font-medium">Créer un mot de passe</label>
+                            <input type="password" id="create-password" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg block w-full p-2.5" required>
+                        </div>
+                        <div>
+                            <label for="confirm-password" class="block mb-2 text-sm font-medium">Confirmer le mot de passe</label>
+                            <input type="password" id="confirm-password" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg block w-full p-2.5" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Créer mon compte</button>
+                </form>
+                 <div class="mt-6 text-center text-sm">
+                    <button id="btn-back-to-login" class="text-blue-400 hover:underline">Retour</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CONTENEUR PRINCIPAL DE L'APPLICATION (initialement caché) -->
+    <div id="app-container" class="flex-col md:flex-row min-h-screen" style="display: none;">
+        <!-- Barre de navigation latérale -->
+        <nav class="bg-gray-800 w-full md:w-64 p-4 md:p-6 flex flex-col">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-400">Suivi des déclarations</h1>
+                <ul class="space-y-2 mt-4">
+                    <li><a href="#" data-page="page-dashboard" class="nav-link flex items-center p-2 text-base font-normal text-gray-300 rounded-lg hover:bg-gray-700">Dashboard</a></li>
+                    <li><a href="#" data-page="page-dossiers" class="nav-link flex items-center p-2 text-base font-normal text-gray-300 rounded-lg hover:bg-gray-700">Liste des Dossiers</a></li>
+                    <li><a href="#" data-page="page-echeances" class="nav-link flex items-center p-2 text-base font-normal text-gray-300 rounded-lg hover:bg-gray-700">Echéances par dossier</a></li>
+                    <li><a href="#" data-page="page-recap" class="nav-link flex items-center p-2 text-base font-normal text-gray-300 rounded-lg hover:bg-gray-700">Récap. des envois et oublis</a></li>
+                    <li><a href="#" data-page="page-calcul-is" class="nav-link flex items-center p-2 text-base font-normal text-gray-300 rounded-lg hover:bg-gray-700">Aide au calcul des acomptes d'IS</a></li>
+                </ul>
+            </div>
+            <div class="mt-auto">
+                <ul class="space-y-2 pt-4 border-t border-gray-700">
+                    <li><a href="#" data-page="page-admin" class="nav-link flex items-center p-2 text-base font-normal text-gray-300 rounded-lg hover:bg-gray-700">Administration</a></li>
+                </ul>
+                <button id="btn-logout" class="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Déconnexion</button>
+            </div>
+        </nav>
+
+        <!-- Contenu principal -->
+        <main class="flex-1 p-6 md:p-10">
+            <!-- PAGE 0: DASHBOARD -->
+            <div id="page-dashboard" class="page">
+                <h2 class="text-3xl font-bold mb-6">Tableau de bord</h2>
+                <div class="space-y-8">
+                    <!-- Urgent Deadlines -->
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4 text-red-400">Échéances urgentes (- de 7 jours)</h3>
+                        <div id="dashboard-urgent" class="space-y-4">
+                            <!-- Urgent tasks will be injected here -->
+                        </div>
+                    </div>
+                    <!-- Upcoming Deadlines -->
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-4 text-yellow-400">Prochaines échéances (- de 15 jours)</h3>
+                        <div id="dashboard-upcoming" class="space-y-4">
+                            <!-- Upcoming tasks will be injected here -->
+                        </div>
+                    </div>
+                    <!-- Overdue Tasks -->
+                    <div class="mt-8">
+                        <h3 class="text-2xl font-semibold mb-4 text-gray-300">Formalités non effectuées (en retard)</h3>
+                        <div id="dashboard-overdue" class="bg-gray-800 p-4 rounded-lg shadow-xl">
+                            <!-- Overdue tasks table will be injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 1: LISTE DES DOSSIERS -->
+            <div id="page-dossiers" class="page">
+                <h2 class="text-3xl font-bold mb-6">Liste des Dossiers</h2>
+
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <button id="btn-nouveau-dossier" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                        Créer un nouveau dossier
+                    </button>
+                    <button id="btn-voir-echeances" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                        Accéder aux échéances
+                    </button>
+                </div>
+                <!-- Barre de recherche -->
+                <div class="mb-6">
+                    <input type="text" id="search-dossiers" class="w-full md:w-1/2 lg:w-1/3 bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" placeholder="Rechercher un dossier, un responsable...">
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-700">
+                            <tr>
+                                <th class="p-4">Nom du dossier</th>
+                                <th class="p-4">Responsable</th>
+                                <th class="p-4">Collaborateur</th>
+                                <th class="p-4 text-center">Date de clôture</th>
+                                <th class="p-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dossiers-table-body" class="divide-y divide-gray-700">
+                            <!-- Données chargées par JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PAGE 2: CRÉER/MODIFIER UN NOUVEAU DOSSIER -->
+            <div id="page-nouveau-dossier" class="page">
+                <button class="back-btn mb-6 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">&larr; Retour</button>
+                <h2 class="text-3xl font-bold mb-6">Nouveau Dossier</h2>
+                <div class="bg-gray-800 p-8 rounded-lg shadow-xl">
+                    <form id="dossier-form">
+                        <input type="hidden" id="dossier-id">
+                        <fieldset class="mb-8">
+                            <legend class="text-xl font-semibold mb-4 text-blue-300">Coordonnées de la société</legend>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="nom_societe" class="block mb-2 text-sm font-medium">Nom de la société</label>
+                                    <input type="text" id="nom_societe" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="Société SAS">
+                                </div>
+                                <div>
+                                    <label for="forme_juridique" class="block mb-2 text-sm font-medium">Forme juridique</label>
+                                    <select id="forme_juridique" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                        <option>SAS</option>
+                                        <option>SARL</option>
+                                        <option>SA</option>
+                                        <option>EURL</option>
+                                        <option>SCI</option>
+                                        <option>Autre</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="siret" class="block mb-2 text-sm font-medium">SIRET</label>
+                                    <input type="text" id="siret" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="123 456 789 00012">
+                                </div>
+                                <div>
+                                    <label for="date_cloture" class="block mb-2 text-sm font-medium">Date de clôture (JJ/MM)</label>
+                                    <input type="text" id="date_cloture" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="JJ/MM" maxlength="5">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="adresse" class="block mb-2 text-sm font-medium">Adresse</label>
+                                    <input type="text" id="adresse" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="123 Rue de la République, 75001 Paris">
+                                </div>
+                                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                                    <div>
+                                        <label for="associe_select" class="block mb-2 text-sm font-medium">Associé</label>
+                                        <select id="associe_select" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
+                                    </div>
+                                    <div>
+                                        <label for="responsable_select" class="block mb-2 text-sm font-medium">Responsable</label>
+                                        <select id="responsable_select" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
+                                    </div>
+                                    <div>
+                                        <label for="collaborateur_select" class="block mb-2 text-sm font-medium">Collaborateur</label>
+                                        <select id="collaborateur_select" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></select>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2 pt-4 border-t border-gray-700 mt-4 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                    <div class="flex items-center space-x-4">
+                                        <span class="text-sm font-medium">Soumis à l'IS :</span>
+                                        <label><input type="radio" name="soumis_is" value="oui" class="mr-1"> Oui</label>
+                                        <label><input type="radio" name="soumis_is" value="non" class="mr-1" checked> Non</label>
+                                    </div>
+                                     <div class="flex items-center space-x-4">
+                                        <span class="text-sm font-medium">Soumis à l'IR :</span>
+                                        <label><input type="radio" name="soumis_ir" value="oui" class="mr-1"> Oui</label>
+                                        <label><input type="radio" name="soumis_ir" value="non" class="mr-1" checked> Non</label>
+                                    </div>
+                                    <div class="flex items-center space-x-4">
+                                        <span class="text-sm font-medium">Soumis à la TVA :</span>
+                                        <label><input type="radio" name="soumis_tva" value="oui" class="mr-1"> Oui</label>
+                                        <label><input type="radio" name="soumis_tva" value="non" class="mr-1" checked> Non</label>
+                                    </div>
+                                    <div id="periodicite-tva-container" class="hidden sm:col-start-3">
+                                        <label for="tva_periodicite_main" class="block mb-2 text-sm font-medium">Périodicité TVA</label>
+                                        <select id="tva_periodicite_main" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                            <option>Mensuelle</option>
+                                            <option>Trimestrielle</option>
+                                            <option>Annuelle</option>
+                                            <option>N/A</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend class="text-xl font-semibold mb-4 text-blue-300">Autres obligations fiscales</legend>
+                            <div class="grid grid-cols-6 items-center gap-4 px-3 pb-2 text-sm text-gray-400">
+                                <div class="text-center">Assujetti</div>
+                                <div class="col-span-2">Déclaration</div>
+                                <div class="col-span-2">Périodicité</div>
+                                <div>Jour max</div>
+                            </div>
+                            <div id="obligations-list" class="space-y-4">
+                                <div class="grid grid-cols-6 items-center gap-4 p-3 bg-gray-700 rounded-lg hidden" data-key="tva">
+                                    <div class="flex justify-center"><input type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500 focus:ring-2 obligation-assujetti"></div>
+                                    <label class="font-medium col-span-2">TVA</label>
+                                    <select class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 col-span-2 obligation-periodicite">
+                                        <option>Mensuelle</option> <option>Trimestrielle</option> <option>Annuelle</option> <option>N/A</option>
+                                    </select>
+                                    <input type="number" class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 obligation-jour" placeholder="Jour" min="1" max="31">
+                                </div>
+                                <div class="grid grid-cols-6 items-center gap-4 p-3 bg-gray-700 rounded-lg hidden" data-key="is">
+                                    <div class="flex justify-center"><input type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500 focus:ring-2 obligation-assujetti"></div>
+                                    <label class="font-medium col-span-2">Impôt sur les Sociétés (IS)</label>
+                                    <select class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 col-span-2 obligation-periodicite">
+                                        <option>Annuelle</option> <option>N/A</option>
+                                    </select>
+                                    <input type="number" value="15" class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 obligation-jour" placeholder="Jour" min="1" max="31">
+                                </div>
+                                <div class="grid grid-cols-6 items-center gap-4 p-3 bg-gray-700 rounded-lg" data-key="acompte_is">
+                                    <div class="flex justify-center"><input type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500 focus:ring-2 obligation-assujetti"></div>
+                                    <label class="font-medium col-span-2">Acompte IS</label>
+                                    <select class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 col-span-2 obligation-periodicite">
+                                        <option>Trimestrielle</option> <option>N/A</option>
+                                    </select>
+                                    <input type="number" class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 obligation-jour" placeholder="Jour" min="1" max="31">
+                                </div>
+                                <div class="grid grid-cols-6 items-center gap-4 p-3 bg-gray-700 rounded-lg" data-key="cvae">
+                                    <div class="flex justify-center"><input type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500 focus:ring-2 obligation-assujetti"></div>
+                                    <label class="font-medium col-span-2">CVAE</label>
+                                    <select class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 col-span-2 obligation-periodicite">
+                                        <option>Annuelle</option> <option>N/A</option>
+                                    </select>
+                                    <input type="number" value="5" class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 obligation-jour" placeholder="Jour" min="1" max="31">
+                                </div>
+                                <div class="grid grid-cols-6 items-center gap-4 p-3 bg-gray-700 rounded-lg" data-key="acompte_cvae">
+                                    <div class="flex justify-center"><input type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500 focus:ring-2 obligation-assujetti"></div>
+                                    <label class="font-medium col-span-2">Acompte CVAE</label>
+                                    <select class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 col-span-2 obligation-periodicite">
+                                        <option>Semestrielle</option> <option>N/A</option>
+                                    </select>
+                                    <input type="number" class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 obligation-jour" placeholder="Jour" min="1" max="31">
+                                </div>
+                                <div class="grid grid-cols-6 items-center gap-4 p-3 bg-gray-700 rounded-lg" data-key="cfe">
+                                    <div class="flex justify-center"><input type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500 focus:ring-2 obligation-assujetti"></div>
+                                    <label class="font-medium col-span-2">CFE</label>
+                                    <select class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 col-span-2 obligation-periodicite">
+                                        <option>Annuelle</option> <option>N/A</option>
+                                    </select>
+                                    <input type="number" class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 obligation-jour" placeholder="Jour" min="1" max="31">
+                                </div>
+                                <div class="grid grid-cols-6 items-center gap-4 p-3 bg-gray-700 rounded-lg" data-key="das2">
+                                    <div class="flex justify-center"><input type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500 focus:ring-2 obligation-assujetti"></div>
+                                    <label class="font-medium col-span-2">DAS-2</label>
+                                    <select class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 col-span-2 obligation-periodicite">
+                                        <option>Annuelle</option> <option>N/A</option>
+                                    </select>
+                                    <input type="number" class="bg-gray-600 border border-gray-500 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 obligation-jour" placeholder="Jour" min="1" max="31">
+                                </div>
+                            </div>
+                        </fieldset>
+                        <div class="mt-8 text-right">
+                             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">Sauvegarder le dossier</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- PAGE 3: ÉCHÉANCES -->
+            <div id="page-echeances" class="page">
+                 <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Échéancier par dossier</h2>
+                    <div class="flex gap-4">
+                        <button class="back-btn bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">&larr; Retour</button>
+                        <button id="btn-clear-statuses" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Effacer les statuts (Nouvelle Année)</button>
+                    </div>
+                </div>
+                <div class="bg-gray-800 rounded-lg shadow-xl overflow-x-auto">
+                    <table class="w-full min-w-[1200px] text-sm text-left">
+                        <thead class="bg-gray-700 text-xs uppercase">
+                            <tr>
+                                <th class="p-3 w-1/4">Dossier / Déclaration</th>
+                                <th class="p-3 text-center">Jan</th><th class="p-3 text-center">Fév</th><th class="p-3 text-center">Mar</th>
+                                <th class="p-3 text-center">Avr</th><th class="p-3 text-center">Mai</th><th class="p-3 text-center">Juin</th>
+                                <th class="p-3 text-center">Juil</th><th class="p-3 text-center">Aoû</th><th class="p-3 text-center">Sep</th>
+                                <th class="p-3 text-center">Oct</th><th class="p-3 text-center">Nov</th><th class="p-3 text-center">Déc</th>
+                            </tr>
+                        </thead>
+                        <tbody id="echeances-tbody" class="divide-y divide-gray-700">
+                            <!-- Données chargées par JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- PAGE 4: RÉCAPITULATIF TÂCHES -->
+            <div id="page-recap" class="page">
+                 <h2 class="text-3xl font-bold mb-6">Récap. des envois et oublis</h2>
+                 
+                 <div id="recap-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cartes chargées par JS -->
+                 </div>
+
+                 <!-- Section des tâches en retard -->
+                <div class="mt-8">
+                    <h3 class="text-2xl font-semibold mb-4">Formalités non effectuées au <span id="todo-list-date"></span></h3>
+                    <div id="todo-list-container" class="bg-gray-800 p-4 rounded-lg shadow-xl">
+                        <!-- Tâches en retard chargées par JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 5: ADMINISTRATION -->
+            <div id="page-admin" class="page">
+                <h2 class="text-3xl font-bold mb-6">Administration</h2>
+                
+                <!-- Section Utilisateurs -->
+                <div class="mb-10">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-2xl font-semibold">Gestion des utilisateurs</h3>
+                        <button id="btn-creer-utilisateur" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Créer un utilisateur</button>
+                    </div>
+                     <div class="bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+                         <table class="w-full text-left">
+                            <thead class="bg-gray-700">
+                                <tr>
+                                    <th class="p-4">Prénom</th>
+                                    <th class="p-4">Nom</th>
+                                    <th class="p-4">Initiales</th>
+                                    <th class="p-4">Email</th>
+                                    <th class="p-4">Fonction</th>
+                                    <th class="p-4 text-center">Administrateur</th>
+                                    <th class="p-4 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-table-body" class="divide-y divide-gray-700">
+                                <!-- Données chargées par JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section Import -->
+                <div>
+                     <h3 class="text-2xl font-semibold mb-4">Importer des données</h3>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Import Dossiers -->
+                        <div class="bg-gray-800 p-6 rounded-lg shadow-xl">
+                            <h4 class="font-bold text-lg mb-2 text-blue-300">Importer des Dossiers</h4>
+                            <p class="mb-4 text-sm text-gray-400">Sélectionnez un fichier CSV ou Excel contenant les informations des dossiers.</p>
+                            <input type="file" class="block w-full text-sm text-gray-400
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-blue-600 file:text-white
+                                hover:file:bg-blue-700
+                            "/>
+                        </div>
+                        <!-- Import Utilisateurs -->
+                        <div class="bg-gray-800 p-6 rounded-lg shadow-xl">
+                            <h4 class="font-bold text-lg mb-2 text-blue-300">Importer des Utilisateurs</h4>
+                            <p class="mb-4 text-sm text-gray-400">Sélectionnez un fichier CSV ou Excel contenant la liste des utilisateurs.</p>
+                            <input type="file" class="block w-full text-sm text-gray-400
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-blue-600 file:text-white
+                                hover:file:bg-blue-700
+                            "/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 6: MODIFIER UTILISATEUR -->
+            <div id="page-edit-utilisateur" class="page">
+                <button class="back-to-admin-btn mb-6 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">&larr; Retour à l'administration</button>
+                <h2 class="text-3xl font-bold mb-6">Modifier l'utilisateur</h2>
+                <div class="bg-gray-800 p-8 rounded-lg shadow-xl">
+                    <form id="edit-user-form">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label for="user-prenom" class="block mb-2 text-sm font-medium">Prénom</label>
+                                <input type="text" id="user-prenom" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                            </div>
+                            <div>
+                                <label for="user-nom" class="block mb-2 text-sm font-medium">Nom</label>
+                                <input type="text" id="user-nom" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                            </div>
+                            <div>
+                                <label for="user-initiales" class="block mb-2 text-sm font-medium">Initiales</label>
+                                <input type="text" id="user-initiales" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" maxlength="3">
+                            </div>
+                            <div>
+                                <label for="user-email" class="block mb-2 text-sm font-medium">Adresse mail</label>
+                                <input type="email" id="user-email" class="bg-gray-600 border border-gray-500 text-gray-400 text-sm rounded-lg block w-full p-2.5 cursor-not-allowed" readonly>
+                            </div>
+                             <div class="md:col-span-2">
+                                <label for="edit-fonction" class="block mb-2 text-sm font-medium">Fonction</label>
+                                <select id="edit-fonction" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    <option>Collaborateur</option>
+                                    <option>Responsable</option>
+                                    <option>Associé</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-4 mt-8">
+                             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">Sauvegarder les modifications</button>
+                             <button type="button" id="reset-password-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">Envoyer un mail de réinitialisation de mot de passe</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+             <!-- PAGE 7: AIDE CALCUL ACOMPTE IS -->
+            <div id="page-calcul-is" class="page">
+                <button class="back-btn mb-6 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">&larr; Retour</button>
+                <h2 class="text-3xl font-bold mb-6">Aide au calcul des Acomptes IS</h2>
+                <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-2xl mx-auto">
+                    <form id="calcul-form">
+                        <p class="text-gray-400 mb-6">Saisissez les informations pour simuler les acomptes à verser.</p>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="acompte_n_moins_1" class="block mb-2 text-sm font-medium">Acompte 4ème Trimestre N-1</label>
+                                <input type="number" id="acompte_n_moins_1" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="0">
+                            </div>
+                            <div>
+                                <label for="resultat_n" class="block mb-2 text-sm font-medium">Résultat Fiscal de l'année N</label>
+                                <input type="number" id="resultat_n" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="0">
+                            </div>
+                            <div class="flex items-center pt-2">
+                                <input id="taux-reduit-checkbox" type="checkbox" class="w-5 h-5 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2">
+                                <label for="taux-reduit-checkbox" class="ml-3 text-sm font-medium">Société détenue à +75% par des personnes physiques (Taux réduit PME)</label>
+                            </div>
+                        </div>
+                        <div class="mt-8 flex justify-center gap-4">
+                             <button id="btn-calculer-acomptes" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md">Calculer</button>
+                             <button id="btn-raz-acomptes" type="reset" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md">Remise à zéro</button>
+                        </div>
+                    </form>
+
+                    <div id="resultat-acomptes-printable">
+                        <div id="resultat-acomptes" class="mt-8 hidden">
+                            <h2 id="printable-company-name" class="text-2xl font-bold text-center mb-4 hidden"></h2>
+                            <h3 class="text-xl font-semibold mb-4 text-center text-blue-300">Résultat de la simulation</h3>
+                            <p class="text-center mb-4 text-lg">IS Total Calculé : <span id="is-total-calcule" class="font-bold text-green-400"></span></p>
+                            <div class="bg-gray-700 p-6 rounded-lg">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr>
+                                            <th class="p-2">Acompte</th>
+                                            <th class="p-2 text-right">Montant à verser</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="acomptes-result-body" class="divide-y divide-gray-600">
+                                       <!-- Results will be injected here -->
+                                    </tbody>
+                                    <tfoot class="border-t-2 border-gray-500">
+                                        <tr>
+                                            <td class="p-2 font-bold">Total des acomptes</td>
+                                            <td id="total-acomptes" class="p-2 text-right font-bold"></td>
+                                        </tr>
+                                        <tr id="remboursement-row" class="hidden">
+                                            <td class="p-2 font-bold text-yellow-400">Excédent à rembourser</td>
+                                            <td id="remboursement-montant" class="p-2 text-right font-bold text-yellow-400"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="mt-8 text-center">
+                        <button id="btn-imprimer-acomptes" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md hidden">Imprimer le résultat</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Fenêtre modale de confirmation de suppression -->
+    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md text-center">
+            <h3 class="text-xl font-bold mb-4" id="delete-modal-title">Confirmer la suppression</h3>
+            <p class="text-gray-300" id="delete-modal-text"></p>
+            <div class="mt-6 flex justify-center gap-4">
+                <button id="modal-cancel" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Annuler</button>
+                <button id="modal-confirm" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Supprimer</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Fenêtre modale de confirmation d'effacement -->
+    <div id="clear-statuses-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md text-center">
+            <h3 class="text-xl font-bold mb-4">Confirmer l'effacement</h3>
+            <p class="text-gray-300">Êtes-vous sûr de vouloir effacer tous les statuts de l'échéancier ?<br>Cette action est idéale pour commencer une nouvelle année mais est irréversible.</p>
+            <div class="mt-6 flex justify-center gap-4">
+                <button id="modal-clear-cancel" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Annuler</button>
+                <button id="modal-clear-confirm" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Effacer</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Fenêtre modale de détail des tâches -->
+    <div id="task-detail-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="task-modal-title" class="text-xl font-bold">Dossiers en retard</h3>
+                <button id="task-modal-close" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <div id="task-modal-content">
+                <p class="text-gray-400">Liste des dossiers pour lesquels cette tâche n'est pas encore faite :</p>
+                <ul id="task-modal-list" class="list-disc list-inside mt-4 space-y-2 text-gray-300">
+                    <!-- Les dossiers seront injectés ici par JS -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- BASE DE DONNÉES SIMULÉE ---
+            let sampleUsers = [
+                { id: 1, prenom: 'Jean', nom: 'Dupont', initiales: 'JD', email: 'j.dupont@email.com', role: 'Associé', isAdmin: true, password: 'admin' },
+                { id: 2, prenom: 'Marie', nom: 'Curie', initiales: 'MC', email: 'm.curie@email.com', role: 'Responsable', isAdmin: true, password: 'admin' },
+                { id: 3, prenom: 'Paul', nom: 'Martin', initiales: 'PM', email: 'p.martin@email.com', role: 'Collaborateur', isAdmin: false, password: 'user' },
+                { id: 4, prenom: 'Lucie', nom: 'Bernard', initiales: 'LB', email: 'l.bernard@email.com', role: 'Associé', isAdmin: false, password: 'user' }
+            ];
+
+            let currentUser;
+
+            let sampleDossiers = [
+                {
+                    id: 1,
+                    nom: 'Société Alpha',
+                    responsable: 'Jean Dupont',
+                    collaborateur: 'Marie Curie',
+                    associe: 'Lucie Bernard',
+                    dateCloture: '31/12',
+                    soumisIR: false,
+                    obligations: {
+                        tva: { assujetti: true, nom: 'TVA', periodicite: 'Mensuelle', jour: 24, status: {'Jan': 'fait', 'Fév': 'fait', 'Mar': 'non-fait'} },
+                        is: { assujetti: true, nom: 'Impôt sur les Sociétés (IS)', periodicite: 'Annuelle', jour: 15, status: {'Mai': 'fait'} },
+                        acompte_is: { assujetti: true, nom: 'Acompte IS', periodicite: 'Trimestrielle', jour: 15, status: {'Mar': 'fait', 'Juin': 'non-fait'} },
+                        cvae: { assujetti: false, nom: 'CVAE', periodicite: 'Annuelle', jour: 5, status: {} }
+                    }
+                },
+                {
+                    id: 2,
+                    nom: 'Entreprise Beta',
+                    responsable: 'Paul Martin',
+                    collaborateur: 'Lucie Bernard',
+                    associe: 'Jean Dupont',
+                    dateCloture: '30/06',
+                    soumisIR: true,
+                    obligations: {
+                        tva: { assujetti: true, nom: 'TVA', periodicite: 'Trimestrielle', jour: 22, status: {'Mar': 'fait'} },
+                        is: { assujetti: true, nom: 'Impôt sur les Sociétés (IS)', periodicite: 'Annuelle', jour: 15, status: {} },
+                        acompte_is: { assujetti: true, nom: 'Acompte IS', periodicite: 'Trimestrielle', jour: 15, status: {'Mar': 'non-fait'} },
+                        cvae: { assujetti: true, nom: 'CVAE', periodicite: 'Annuelle', jour: 5, status: {} }
+                    }
+                },
+                 {
+                    id: 3,
+                    nom: 'Startup Gamma',
+                    responsable: 'Jean Dupont',
+                    collaborateur: 'Marie Curie',
+                    associe: 'Paul Martin',
+                    dateCloture: '31/03',
+                    soumisIR: false,
+                    obligations: {
+                        tva: { assujetti: true, nom: 'TVA', periodicite: 'Mensuelle', jour: 21, status: {'Jan': 'fait', 'Fév': 'fait', 'Mar': 'fait'} },
+                        is: { assujetti: false, nom: 'Impôt sur les Sociétés (IS)', periodicite: 'Annuelle', jour: 15, status: {} },
+                        acompte_is: { assujetti: false, nom: 'Acompte IS', periodicite: 'Trimestrielle', jour: 15, status: {} },
+                        cvae: { assujetti: true, nom: 'CVAE', periodicite: 'Annuelle', jour: 5, status: {'Mai': 'non-fait'} }
+                    }
+                }
+            ];
+
+
+            // --- Elements DOM ---
+            const pages = document.querySelectorAll('.page');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const btnNouveauDossier = document.getElementById('btn-nouveau-dossier');
+            const btnVoirEcheances = document.getElementById('btn-voir-echeances');
+            const backBtns = document.querySelectorAll('.back-btn');
+            const backToAdminBtn = document.querySelector('.back-to-admin-btn');
+            
+            // --- Logique de navigation ---
+            function showPage(pageId) {
+                pages.forEach(page => page.classList.remove('active'));
+                const activePage = document.getElementById(pageId);
+                if (activePage) activePage.classList.add('active');
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    const pageId = link.getAttribute('data-page');
+
+                    if (pageId === 'page-admin') {
+                        if (!currentUser.isAdmin) {
+                            showNotification("Accès refusé. Seuls les administrateurs peuvent accéder à cette page.", true);
+                            return;
+                        }
+                         showPage(pageId);
+                    } else {
+                        showPage(pageId);
+                    }
+                });
+            });
+
+            if (btnNouveauDossier) {
+                btnNouveauDossier.addEventListener('click', () => {
+                    document.getElementById('page-nouveau-dossier').querySelector('h2').textContent = 'Nouveau Dossier';
+                    document.querySelector('#page-nouveau-dossier button[type="submit"]').textContent = 'Sauvegarder le dossier';
+                    document.querySelector('#dossier-form').reset();
+                    showPage('page-nouveau-dossier');
+                });
+            }
+            if (btnVoirEcheances) btnVoirEcheances.addEventListener('click', () => showPage('page-echeances'));
+            backBtns.forEach(btn => btn.addEventListener('click', () => showPage('page-dossiers')));
+            if(backToAdminBtn) backToAdminBtn.addEventListener('click', () => showPage('page-admin'));
+
+            // --- Bannière de notification ---
+            function showNotification(message, isError = false) {
+                const banner = document.getElementById('notification-banner');
+                banner.textContent = message;
+                banner.className = `fixed top-0 left-1/2 -translate-x-1/2 text-white py-2 px-6 rounded-b-lg shadow-lg z-50 transition-transform transform -translate-y-full ${isError ? 'bg-red-600' : 'bg-green-600'}`;
+                banner.style.display = 'block';
+                requestAnimationFrame(() => banner.classList.remove('-translate-y-full'));
+                setTimeout(() => {
+                    banner.classList.add('-translate-y-full');
+                    setTimeout(() => banner.style.display = 'none', 300);
+                }, 3000);
+            }
+            
+            // --- FONCTIONS DE RENDU ---
+            const dossierTableBody = document.getElementById('dossiers-table-body');
+            const echeancesTbody = document.getElementById('echeances-tbody');
+            const recapContainer = document.getElementById('recap-cards-container');
+            const userTableBody = document.getElementById('user-table-body');
+
+            function renderDossiersTable() {
+                if (!dossierTableBody || !currentUser) return;
+                
+                let dossiersToDisplay;
+                const currentUserName = `${currentUser.prenom} ${currentUser.nom}`;
+
+                if (currentUser.isAdmin) {
+                    dossiersToDisplay = sampleDossiers;
+                } else {
+                    dossiersToDisplay = sampleDossiers.filter(dossier => 
+                        dossier.responsable === currentUserName || 
+                        dossier.collaborateur === currentUserName
+                    );
+                }
+
+                dossierTableBody.innerHTML = dossiersToDisplay.map(dossier => `
+                    <tr data-id="${dossier.id}">
+                        <td class="p-4">${dossier.nom}</td>
+                        <td class="p-4">${dossier.responsable}</td>
+                        <td class="p-4">${dossier.collaborateur}</td>
+                        <td class="p-4 text-center">${dossier.dateCloture}</td>
+                        <td class="p-4 text-center space-x-2">
+                            <button class="edit-btn text-blue-400 hover:underline">Modifier</button>
+                            <button class="delete-btn text-red-400 hover:underline">Supprimer</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            function renderUsersTable() {
+                if (!userTableBody) return;
+                userTableBody.innerHTML = sampleUsers.map(user => `
+                     <tr data-id="${user.id}">
+                        <td class="p-4">${user.prenom}</td>
+                        <td class="p-4">${user.nom}</td>
+                        <td class="p-4">${user.initiales}</td>
+                        <td class="p-4">${user.email}</td>
+                        <td class="p-4">${user.role}</td>
+                        <td class="p-4 text-center">
+                            <input type="checkbox" ${user.isAdmin ? 'checked' : ''} class="w-5 h-5 text-blue-600 bg-gray-700 border-gray-500 rounded focus:ring-blue-500 focus:ring-2 admin-checkbox">
+                        </td>
+                        <td class="p-4 text-center space-x-2">
+                            <button class="user-edit-btn text-blue-400 hover:underline">Modifier</button>
+                            <button class="user-delete-btn text-red-400 hover:underline">Supprimer</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            function populateUserDropdowns() {
+                const selects = [
+                    document.getElementById('associe_select'),
+                    document.getElementById('responsable_select'),
+                    document.getElementById('collaborateur_select')
+                ];
+                
+                selects.forEach(select => {
+                    if (!select) return;
+                    select.innerHTML = '<option value="">Sélectionnez...</option>'; // Option par défaut
+                    sampleUsers.forEach(user => {
+                        const option = document.createElement('option');
+                        const fullName = `${user.prenom} ${user.nom}`;
+                        option.value = fullName;
+                        option.textContent = fullName;
+                        select.appendChild(option);
+                    });
+                });
+            }
+
+            function isMonthApplicable(monthIndex, periodicite) {
+                switch(periodicite) {
+                    case 'Mensuelle': return true;
+                    case 'Trimestrielle': return [2, 5, 8, 11].includes(monthIndex);
+                    case 'Semestrielle': return [5, 11].includes(monthIndex);
+                    case 'Annuelle': return monthIndex === 4;
+                    default: return false;
+                }
+            }
+            
+            function renderDashboard() {
+                const urgentContainer = document.getElementById('dashboard-urgent');
+                const upcomingContainer = document.getElementById('dashboard-upcoming');
+                const overdueContainer = document.getElementById('dashboard-overdue');
+                if (!urgentContainer || !upcomingContainer || !overdueContainer || !currentUser) return;
+
+                const today = new Date();
+                const currentYear = today.getFullYear();
+                const allDeadlines = [];
+                const overdueTasks = [];
+
+                let dossiersToDisplay;
+                const currentUserName = `${currentUser.prenom} ${currentUser.nom}`;
+
+                if (currentUser.isAdmin) {
+                    dossiersToDisplay = sampleDossiers;
+                } else {
+                    dossiersToDisplay = sampleDossiers.filter(dossier => 
+                        dossier.responsable === currentUserName || 
+                        dossier.collaborateur === currentUserName
+                    );
+                }
+
+                dossiersToDisplay.forEach(dossier => {
+                    for (const key in dossier.obligations) {
+                        const obligation = dossier.obligations[key];
+                        if (obligation.assujetti) {
+                            for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+                                if (isMonthApplicable(monthIndex, obligation.periodicite)) {
+                                    const deadlineDate = new Date(currentYear, monthIndex, obligation.jour);
+                                    const monthName = new Date(currentYear, monthIndex).toLocaleString('fr-FR', { month: 'long' });
+                                    const shortMonthName = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'][monthIndex];
+
+                                    // Check for overdue tasks
+                                    if (deadlineDate < today && obligation.status[shortMonthName] !== 'fait') {
+                                        overdueTasks.push({
+                                            dossierNom: dossier.nom,
+                                            obligationNom: obligation.nom,
+                                            periode: monthName,
+                                            deadlineDate,
+                                        });
+                                    }
+                                    // Check for upcoming tasks
+                                    else if (deadlineDate >= today && obligation.status[shortMonthName] !== 'fait') {
+                                        const timeDiff = deadlineDate.getTime() - today.getTime();
+                                        const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                                        allDeadlines.push({
+                                            dossierNom: dossier.nom,
+                                            obligationNom: obligation.nom,
+                                            deadlineDate,
+                                            daysRemaining
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                allDeadlines.sort((a, b) => a.deadlineDate - b.deadlineDate);
+
+                const urgentTasks = allDeadlines.filter(d => d.daysRemaining <= 7);
+                const upcomingTasks = allDeadlines.filter(d => d.daysRemaining > 7 && d.daysRemaining <= 15);
+                
+                urgentContainer.innerHTML = urgentTasks.length ? urgentTasks.map(task => `
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-bold">${task.dossierNom}</p>
+                                <p class="text-sm text-gray-400">${task.obligationNom}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-red-400">${task.deadlineDate.toLocaleDateString('fr-FR')}</p>
+                                <p class="text-xs text-gray-500">Dans ${task.daysRemaining} jours</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('') : '<p class="text-gray-500">Aucune échéance urgente.</p>';
+
+                upcomingContainer.innerHTML = upcomingTasks.length ? upcomingTasks.map(task => `
+                     <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-bold">${task.dossierNom}</p>
+                                <p class="text-sm text-gray-400">${task.obligationNom}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-yellow-400">${task.deadlineDate.toLocaleDateString('fr-FR')}</p>
+                                <p class="text-xs text-gray-500">Dans ${task.daysRemaining} jours</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('') : '<p class="text-gray-500">Aucune autre échéance à venir.</p>';
+                
+                overdueContainer.innerHTML = overdueTasks.length ? `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-700">
+                                <tr>
+                                    <th class="p-3">Nom du dossier</th>
+                                    <th class="p-3">Formalité</th>
+                                    <th class="p-3">Mois Concerné</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-600">
+                                ${overdueTasks.map(task => `
+                                    <tr>
+                                        <td class="p-3">${task.dossierNom}</td>
+                                        <td class="p-3">${task.obligationNom}</td>
+                                        <td class="p-3">${task.periode}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : '<p class="text-gray-500">Aucune formalité en retard.</p>';
+            }
+
+            function renderEcheances() {
+                if (!echeancesTbody || !currentUser) return;
+                const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const currentYear = today.getFullYear();
+                
+                let dossiersToDisplay;
+                const currentUserName = `${currentUser.prenom} ${currentUser.nom}`;
+
+                if (currentUser.isAdmin) {
+                    dossiersToDisplay = sampleDossiers;
+                } else {
+                    dossiersToDisplay = sampleDossiers.filter(dossier => 
+                        dossier.responsable === currentUserName || 
+                        dossier.collaborateur === currentUserName
+                    );
+                }
+
+                let html = '';
+                dossiersToDisplay.forEach(dossier => {
+                    html += `<tr class="bg-gray-700" data-dossier-id="${dossier.id}"><td colspan="13" class="p-3 font-bold text-base">${dossier.nom}</td></tr>`;
+                    
+                    for (const key in dossier.obligations) {
+                        const obligation = dossier.obligations[key];
+                        if (obligation.assujetti) {
+                            html += `<tr data-dossier-id="${dossier.id}" data-obligation-key="${key}"><td class="pl-8 p-3 font-medium">${obligation.nom}</td>`;
+                            html += months.map((month, monthIndex) => {
+                                if (isMonthApplicable(monthIndex, obligation.periodicite)) {
+                                    let status = obligation.status[month] || 'non-fait';
+                                    
+                                    return `<td class="p-1"><button data-month="${month}" data-status="${status}" class="status-btn w-full h-8 rounded text-sm"></button></td>`;
+                                } else {
+                                    return `<td class="p-1"></td>`;
+                                }
+                            }).join('');
+                            html += `</tr>`;
+                        }
+                    }
+                });
+                echeancesTbody.innerHTML = html;
+                initStatusButtons();
+            }
+
+            function renderRecapCards() {
+                if (!recapContainer) return;
+
+                const tasksToTrack = [
+                    { title: 'TVA Mensuelle', obligationKey: 'tva', periodicite: 'Mensuelle' },
+                    { title: 'Acomptes IS', obligationKey: 'acompte_is', periodicite: 'Trimestrielle' }
+                ];
+
+                let html = '';
+                tasksToTrack.forEach(task => {
+                    let total = 0;
+                    let faits = 0;
+                    sampleDossiers.forEach(dossier => {
+                        const obligation = dossier.obligations[task.obligationKey];
+                        if (obligation && obligation.assujetti && obligation.periodicite === task.periodicite) {
+                            const statuses = Object.values(obligation.status);
+                            total += statuses.length;
+                            faits += statuses.filter(s => s === 'fait').length;
+                        }
+                    });
+                    
+                    const percentage = total > 0 ? Math.round((faits / total) * 100) : 0;
+                    const color = percentage > 80 ? 'bg-green-500' : percentage > 50 ? 'bg-yellow-500' : 'bg-red-500';
+
+                    html += `
+                    <div data-task="${task.title}" class="recap-card bg-gray-800 p-6 rounded-lg shadow-xl cursor-pointer hover:bg-gray-700 transition-colors">
+                        <h3 class="font-bold text-lg mb-2 text-blue-300">${task.title}</h3>
+                        <p class="text-gray-400 mb-4">Suivi global des déclarations.</p>
+                        <div class="w-full bg-gray-700 rounded-full h-4 mb-2">
+                            <div class="${color} h-4 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                        <p class="text-right text-sm font-medium">${percentage}% complété (${faits}/${total})</p>
+                    </div>`;
+                });
+                recapContainer.innerHTML = html;
+            }
+
+            function renderTodoList() {
+                const container = document.getElementById('todo-list-container');
+                const dateDisplay = document.getElementById('todo-list-date');
+                if (!container || !dateDisplay) return;
+
+                const today = new Date();
+                const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+                dateDisplay.textContent = today.toLocaleDateString('fr-FR', dateOptions);
+                today.setHours(0, 0, 0, 0);
+                const currentYear = today.getFullYear();
+                const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+                const outstandingTasks = [];
+
+                sampleDossiers.forEach(dossier => {
+                    for (const key in dossier.obligations) {
+                        const obligation = dossier.obligations[key];
+                        if (!obligation.assujetti) continue;
+
+                        months.forEach((month, monthIndex) => {
+                            if (isMonthApplicable(monthIndex, obligation.periodicite)) {
+                                const deadline = new Date(currentYear, monthIndex, obligation.jour);
+                                const status = obligation.status[month] || 'na';
+                                
+                                if (deadline < today && status !== 'fait') {
+                                    outstandingTasks.push({
+                                        dossierNom: dossier.nom,
+                                        obligationNom: obligation.nom,
+                                        periode: month,
+                                        deadline: deadline
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+
+                outstandingTasks.sort((a, b) => a.deadline - b.deadline);
+
+                if (outstandingTasks.length === 0) {
+                    container.innerHTML = '<p class="text-gray-400">Aucune formalité en retard à ce jour.</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-700">
+                                <tr>
+                                    <th class="p-3">Nom de la société</th>
+                                    <th class="p-3">Type de déclaration</th>
+                                    <th class="p-3">Échéance</th>
+                                    <th class="p-3">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-600">
+                                ${outstandingTasks.map(task => `
+                                    <tr>
+                                        <td class="p-3">${task.dossierNom}</td>
+                                        <td class="p-3">${task.obligationNom} - ${task.periode}</td>
+                                        <td class="p-3">${task.deadline.toLocaleDateString('fr-FR')}</td>
+                                        <td class="p-3"><span class="text-red-400 font-semibold">Non Fait</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            // --- Page Dossiers ---
+            const searchInput = document.getElementById('search-dossiers');
+            const deleteModal = document.getElementById('delete-modal');
+            let elementToDelete = null;
+
+            if (dossierTableBody) {
+                dossierTableBody.addEventListener('click', e => {
+                    const target = e.target;
+                    const row = target.closest('tr');
+                    if (!row || !row.dataset.id) return;
+
+                    if (target.classList.contains('delete-btn')) {
+                        elementToDelete = { type: 'dossier', row: row };
+                        document.getElementById('delete-modal-text').innerHTML = 'Êtes-vous sûr de vouloir supprimer ce dossier ?<br>Cette action est irréversible.';
+                        deleteModal.style.display = 'flex';
+                    } else if (target.classList.contains('edit-btn')) {
+                        const dossierId = parseInt(row.dataset.id);
+                        const dossier = sampleDossiers.find(d => d.id === dossierId);
+                        if (!dossier) return;
+                        
+                        document.getElementById('nom_societe').value = dossier.nom;
+                        document.getElementById('date_cloture').value = dossier.dateCloture;
+                        document.getElementById('associe_select').value = dossier.associe;
+                        document.getElementById('responsable_select').value = dossier.responsable;
+                        document.getElementById('collaborateur_select').value = dossier.collaborateur;
+                        
+                        document.getElementById('page-nouveau-dossier').querySelector('h2').textContent = 'Modifier le Dossier';
+                        document.querySelector('#page-nouveau-dossier button[type="submit"]').textContent = 'Mettre à jour le dossier';
+                        
+                        showPage('page-nouveau-dossier');
+                    }
+                });
+            }
+            
+            if (searchInput) {
+                 searchInput.addEventListener('input', () => {
+                    const filter = searchInput.value.toLowerCase();
+                    dossierTableBody.querySelectorAll('tr').forEach(row => {
+                        row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+                    });
+                });
+            }
+
+            if (deleteModal) {
+                document.getElementById('modal-cancel').addEventListener('click', () => deleteModal.style.display = 'none');
+                document.getElementById('modal-confirm').addEventListener('click', () => {
+                    if (elementToDelete) {
+                        if (elementToDelete.type === 'dossier') {
+                            const dossierId = parseInt(elementToDelete.row.dataset.id);
+                            sampleDossiers = sampleDossiers.filter(d => d.id !== dossierId);
+                            renderDossiersTable();
+                            showNotification("Dossier supprimé.");
+                        } else if (elementToDelete.type === 'user') {
+                            const userId = parseInt(elementToDelete.row.dataset.id);
+                            sampleUsers = sampleUsers.filter(u => u.id !== userId);
+                            renderUsersTable();
+                            populateUserDropdowns();
+                            showNotification("Utilisateur supprimé.");
+                        }
+                    }
+                    deleteModal.style.display = 'none';
+                    elementToDelete = null;
+                });
+            }
+            
+            const dossierForm = document.getElementById('dossier-form');
+            if (dossierForm) {
+                const tvaRadios = document.querySelectorAll('input[name="soumis_tva"]');
+                const tvaPeriodiciteContainer = document.getElementById('periodicite-tva-container');
+                const isRadioYes = document.querySelector('input[name="soumis_is"][value="oui"]');
+
+                tvaRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        tvaPeriodiciteContainer.classList.toggle('hidden', this.value !== 'oui');
+                        const tvaObligationRow = document.querySelector('#obligations-list [data-key="tva"]');
+                        if (tvaObligationRow) tvaObligationRow.querySelector('.obligation-assujetti').checked = (this.value === 'oui');
+                    });
+                });
+
+                isRadioYes.addEventListener('change', function() {
+                     const isObligationRow = document.querySelector('#obligations-list [data-key="is"]');
+                     if(isObligationRow) isObligationRow.querySelector('.obligation-assujetti').checked = this.checked;
+                });
+
+                dossierForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    // Here you would add the logic to save the form data
+                    showNotification("Dossier sauvegardé avec succès.");
+                    renderDossiersTable();
+                    showPage('page-dossiers');
+                });
+            }
+
+            // --- Page Échéances ---
+            function updateStatusButtonUI(button, status) {
+                button.textContent = '';
+                button.className = 'status-btn w-full h-8 rounded text-sm transition-colors'; // reset
+                if (status === 'fait') {
+                    button.textContent = 'Fait';
+                    button.classList.add('bg-green-500', 'hover:bg-green-600', 'text-white');
+                } else if (status === 'non-fait') {
+                    button.textContent = 'Non Fait';
+                    button.classList.add('bg-red-500', 'hover:bg-red-600', 'text-white');
+                } else {
+                    button.classList.add('hover:bg-gray-600');
+                }
+            }
+
+            function initStatusButtons() {
+                echeancesTbody.querySelectorAll('.status-btn').forEach(btn => updateStatusButtonUI(btn, btn.dataset.status));
+            }
+
+            if (echeancesTbody) {
+                echeancesTbody.addEventListener('click', e => {
+                    if (e.target.classList.contains('status-btn')) {
+                        const button = e.target;
+                        const row = button.closest('tr');
+                        const dossierId = parseInt(row.dataset.dossierId);
+                        const obligationKey = row.dataset.obligationKey;
+                        const month = button.dataset.month;
+
+                        const currentStatus = button.dataset.status;
+                        const nextStatus = (currentStatus === 'fait') ? 'non-fait' : 'fait';
+                        
+                        // Update data model
+                        const dossier = sampleDossiers.find(d => d.id === dossierId);
+                        if(dossier && dossier.obligations[obligationKey]) {
+                            dossier.obligations[obligationKey].status[month] = nextStatus;
+                        }
+
+                        // Update UI
+                        button.dataset.status = nextStatus;
+                        updateStatusButtonUI(button, nextStatus);
+                        
+                        // Re-render dependent components
+                        renderDashboard();
+                        renderTodoList();
+                        renderRecapCards();
+                    }
+                });
+            }
+            
+            const btnClearStatuses = document.getElementById('btn-clear-statuses');
+            const clearStatusesModal = document.getElementById('clear-statuses-modal');
+
+            if (btnClearStatuses) {
+                btnClearStatuses.addEventListener('click', () => {
+                    clearStatusesModal.style.display = 'flex';
+                });
+            }
+
+            if (clearStatusesModal) {
+                document.getElementById('modal-clear-cancel').addEventListener('click', () => {
+                    clearStatusesModal.style.display = 'none';
+                });
+
+                document.getElementById('modal-clear-confirm').addEventListener('click', () => {
+                    sampleDossiers.forEach(dossier => {
+                        for (const key in dossier.obligations) {
+                            dossier.obligations[key].status = {};
+                        }
+                    });
+                    
+                    renderEcheances();
+                    renderTodoList();
+                    renderDashboard();
+                    
+                    clearStatusesModal.style.display = 'none';
+                    showNotification("Tous les statuts ont été effacés.");
+                });
+            }
+
+            // --- Page Récapitulatif ---
+            const recapPage = document.getElementById('page-recap');
+            if (recapPage) {
+                const taskDetailModal = document.getElementById('task-detail-modal');
+                
+                recapContainer.addEventListener('click', e => {
+                    const card = e.target.closest('.recap-card');
+                    if (card) {
+                        const taskType = card.dataset.task;
+                        
+                        const dossiersEnRetard = [];
+                         sampleDossiers.forEach(dossier => {
+                            for(const key in dossier.obligations){
+                                const ob = dossier.obligations[key];
+                                const taskTitle = ob.periodicite === 'Mensuelle' ? `${ob.nom.split(' ')[0]} Mensuelle` : ob.nom;
+                                if(taskTitle.includes(taskType.split(' ')[0])){
+                                     const hasNonFait = Object.values(ob.status).includes('non-fait');
+                                     if(hasNonFait) dossiersEnRetard.push(dossier.nom);
+                                }
+                            }
+                        });
+                        
+                        const taskModalList = document.getElementById('task-modal-list');
+                        document.getElementById('task-modal-title').textContent = `Dossiers en retard pour : ${card.querySelector('h3').textContent}`;
+                        taskModalList.innerHTML = dossiersEnRetard.length ? 
+                            [...new Set(dossiersEnRetard)].map(d => `<li>${d}</li>`).join('') :
+                            '<li>Aucun dossier en retard pour cette tâche.</li>';
+                        
+                        taskDetailModal.style.display = 'flex';
+                    }
+                });
+
+                document.getElementById('task-modal-close').addEventListener('click', () => taskDetailModal.style.display = 'none');
+                taskDetailModal.addEventListener('click', e => {
+                    if (e.target === taskDetailModal) taskDetailModal.style.display = 'none';
+                });
+            }
+            
+            // --- Page Administration (Modification Utilisateur) ---
+            if (userTableBody) {
+                userTableBody.addEventListener('click', e => {
+                    const target = e.target;
+                    const row = target.closest('tr');
+                    if (!row || !row.dataset.id) return;
+                    
+                    if (target.classList.contains('user-edit-btn')) {
+                        const dataId = parseInt(row.dataset.id);
+                        const user = sampleUsers.find(u => u.id === dataId);
+                        if (!user) return;
+                        
+                        document.getElementById('user-prenom').value = user.prenom;
+                        document.getElementById('user-nom').value = user.nom;
+                        document.getElementById('user-initiales').value = user.initiales;
+                        document.getElementById('user-email').value = user.email;
+                        document.getElementById('edit-fonction').value = user.role;
+                        
+                        showPage('page-edit-utilisateur');
+                    } else if (target.classList.contains('user-delete-btn')) {
+                        elementToDelete = { type: 'user', row: row };
+                        document.getElementById('delete-modal-text').innerHTML = 'Êtes-vous sûr de vouloir supprimer cet utilisateur ?<br>Cette action est irréversible.';
+                        deleteModal.style.display = 'flex';
+                    } else if (target.classList.contains('admin-checkbox')) {
+                         const dataId = parseInt(row.dataset.id);
+                         const user = sampleUsers.find(u => u.id === dataId);
+                         if (user) {
+                            user.isAdmin = target.checked;
+                            showNotification(`Statut administrateur mis à jour pour ${user.prenom} ${user.nom}.`);
+                         }
+                    }
+                });
+            }
+            
+            const editUserForm = document.getElementById('edit-user-form');
+            if(editUserForm) {
+                editUserForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('user-email').value;
+                    const prenom = document.getElementById('user-prenom').value;
+                    const nom = document.getElementById('user-nom').value;
+                    const initiales = document.getElementById('user-initiales').value;
+                    const fonction = document.getElementById('edit-fonction').value;
+
+                    const userIndex = sampleUsers.findIndex(u => u.email === email);
+                    if (userIndex !== -1) {
+                        sampleUsers[userIndex].prenom = prenom;
+                        sampleUsers[userIndex].nom = nom;
+                        sampleUsers[userIndex].initiales = initiales;
+                        sampleUsers[userIndex].role = fonction;
+
+                        renderUsersTable();
+                        populateUserDropdowns();
+
+                        showNotification("Utilisateur mis à jour avec succès.");
+                        showPage('page-admin');
+                    } else {
+                        showNotification("Erreur : Utilisateur non trouvé.", true);
+                    }
+                });
+            }
+            
+            const resetPasswordBtn = document.getElementById('reset-password-btn');
+            if(resetPasswordBtn) {
+                resetPasswordBtn.addEventListener('click', () => {
+                    const email = document.getElementById('user-email').value;
+                    showNotification(`Un e-mail de réinitialisation a été envoyé à ${email}.`);
+                });
+            }
+
+            // --- Page Aide Calcul IS ---
+            const pageCalculIS = document.getElementById('page-calcul-is');
+            if (pageCalculIS) {
+                const btnCalculerAcomptes = document.getElementById('btn-calculer-acomptes');
+                const btnImprimerAcomptes = document.getElementById('btn-imprimer-acomptes');
+                const resultatAcomptesDiv = document.getElementById('resultat-acomptes');
+                const acomptesResultBody = document.getElementById('acomptes-result-body');
+                const isTotalSpan = document.getElementById('is-total-calcule');
+                const totalAcomptesTd = document.getElementById('total-acomptes');
+                const calculForm = document.getElementById('calcul-form');
+                const remboursementRow = document.getElementById('remboursement-row');
+                const remboursementMontantTd = document.getElementById('remboursement-montant');
+                const companyNameElement = document.getElementById('printable-company-name');
+                
+                const formatCurrency = (val) => (val >= 0 ? Math.round(val).toFixed(0) : '0') + ' €';
+
+                btnCalculerAcomptes.addEventListener('click', () => {
+                    const acompteNMoins1 = parseFloat(document.getElementById('acompte_n_moins_1').value) || 0;
+                    const resultatN = parseFloat(document.getElementById('resultat_n').value) || 0;
+                    const tauxReduit = document.getElementById('taux-reduit-checkbox').checked;
+                    
+                    let isCalcule;
+                    const seuilTauxReduit = 42500;
+                    
+                    if (tauxReduit && resultatN > 0) {
+                        const tranche1 = Math.min(resultatN, seuilTauxReduit);
+                        const tranche2 = Math.max(0, resultatN - seuilTauxReduit);
+                        isCalcule = (tranche1 * 0.15) + (tranche2 * 0.25);
+                    } else {
+                        isCalcule = resultatN > 0 ? resultatN * 0.25 : 0;
+                    }
+                    isCalcule = Math.round(isCalcule);
+
+                    const acompte1 = (acompteNMoins1 > 0) ? Math.round(acompteNMoins1) : 0;
+
+                    const target2 = Math.round(isCalcule * 0.5);
+                    let acompte2 = Math.max(0, target2 - acompte1);
+
+                    const target3 = Math.round(isCalcule * 0.75);
+                    let acompte3 = Math.max(0, target3 - acompte1 - acompte2);
+
+                    let acompte4 = Math.max(0, isCalcule - acompte1 - acompte2 - acompte3);
+                    
+                    const totalAcomptes = acompte1 + acompte2 + acompte3 + acompte4;
+
+                    isTotalSpan.textContent = formatCurrency(isCalcule);
+
+                    acomptesResultBody.innerHTML = `
+                        <tr><td class="p-2">1er Acompte (15/03)</td><td class="p-2 text-right">${formatCurrency(acompte1)}</td></tr>
+                        <tr><td class="p-2">2ème Acompte (15/06)</td><td class="p-2 text-right">${formatCurrency(acompte2)}</td></tr>
+                        <tr><td class="p-2">3ème Acompte (15/09)</td><td class="p-2 text-right">${formatCurrency(acompte3)}</td></tr>
+                        <tr><td class="p-2">4ème Acompte (15/12)</td><td class="p-2 text-right">${formatCurrency(acompte4)}</td></tr>
+                    `;
+                    totalAcomptesTd.textContent = formatCurrency(totalAcomptes);
+
+                    if (totalAcomptes > isCalcule) {
+                        const remboursement = totalAcomptes - isCalcule;
+                        remboursementMontantTd.textContent = formatCurrency(remboursement);
+                        remboursementRow.classList.remove('hidden');
+                    } else {
+                        remboursementRow.classList.add('hidden');
+                    }
+
+                    resultatAcomptesDiv.classList.remove('hidden');
+                    btnImprimerAcomptes.classList.remove('hidden');
+                });
+                
+                calculForm.addEventListener('reset', () => {
+                     setTimeout(() => {
+                        resultatAcomptesDiv.classList.add('hidden');
+                        btnImprimerAcomptes.classList.add('hidden');
+                        remboursementRow.classList.add('hidden');
+                     }, 0);
+                });
+
+                if (btnImprimerAcomptes) {
+                    btnImprimerAcomptes.addEventListener('click', () => {
+                        const companyName = prompt("Veuillez saisir le nom de la société pour l'impression :");
+                        if (companyName && companyName.trim() !== "") {
+                            companyNameElement.textContent = `Société : ${companyName.trim()}`;
+                            companyNameElement.classList.remove('hidden');
+                            window.print();
+                        } else if (companyName !== null) {
+                            showNotification("Le nom de la société ne peut pas être vide.", true);
+                        }
+                    });
+
+                    window.addEventListener('afterprint', () => {
+                        if (companyNameElement) {
+                            companyNameElement.classList.add('hidden');
+                            companyNameElement.textContent = '';
+                        }
+                    });
+                }
+            }
+
+
+            // --- LOGIQUE D'AUTHENTIFICATION ---
+            const loginPage = document.getElementById('page-login');
+            const createAccountPage = document.getElementById('page-creation-compte');
+            const appContainer = document.getElementById('app-container');
+            const loginForm = document.getElementById('login-form');
+            const btnShowCreateAccount = document.getElementById('btn-show-create-account');
+            const btnBackToLogin = document.getElementById('btn-back-to-login');
+            const btnResetPassword = document.getElementById('btn-reset-password');
+            const btnLogout = document.getElementById('btn-logout');
+            const btnCreerUtilisateur = document.getElementById('btn-creer-utilisateur');
+            let cameFromPage = 'page-login';
+
+            
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                const user = sampleUsers.find(u => u.email === email && u.password === password);
+                
+                if (user) {
+                    currentUser = user;
+                    loginPage.style.display = 'none';
+                    appContainer.style.display = 'flex';
+                    initApp();
+                } else {
+                    showNotification("Login ou mot de passe incorrect.", true);
+                }
+            });
+
+            btnShowCreateAccount.addEventListener('click', () => {
+                cameFromPage = 'page-login';
+                loginPage.style.display = 'none';
+                createAccountPage.style.display = 'flex';
+            });
+            
+            if (btnCreerUtilisateur) {
+                btnCreerUtilisateur.addEventListener('click', () => {
+                    cameFromPage = 'page-admin';
+                    appContainer.style.display = 'none';
+                    createAccountPage.style.display = 'flex';
+                });
+            }
+
+            btnBackToLogin.addEventListener('click', () => {
+                if (cameFromPage === 'page-admin') {
+                    createAccountPage.style.display = 'none';
+                    appContainer.style.display = 'flex';
+                    showPage('page-admin');
+                } else {
+                    createAccountPage.style.display = 'none';
+                    loginPage.style.display = 'flex';
+                }
+            });
+            
+            btnResetPassword.addEventListener('click', () => {
+                const email = prompt("Veuillez saisir votre adresse e-mail pour réinitialiser votre mot de passe :");
+                if (email) {
+                    showNotification(`Un e-mail de réinitialisation a été envoyé à ${email}.`);
+                }
+            });
+
+            btnLogout.addEventListener('click', () => {
+                currentUser = null;
+                appContainer.style.display = 'none';
+                createAccountPage.style.display = 'none';
+                loginPage.style.display = 'flex';
+                loginForm.reset();
+            });
+
+            const createAccountForm = document.getElementById('create-account-form');
+            createAccountForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const prenom = document.getElementById('create-prenom').value.trim();
+                const nom = document.getElementById('create-nom').value.trim();
+                const initiales = document.getElementById('create-initiales').value.trim();
+                const email = document.getElementById('create-email').value.trim();
+                const password = document.getElementById('create-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                const fonction = document.getElementById('create-fonction').value;
+
+                if (!prenom || !nom || !initiales || !email || !password) {
+                    showNotification("Veuillez remplir tous les champs.", true);
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    showNotification("Les mots de passe ne correspondent pas.", true);
+                    return;
+                }
+                if (sampleUsers.some(u => u.email === email)) {
+                    showNotification("Cet email est déjà utilisé.", true);
+                    return;
+                }
+
+                const newUser = {
+                    id: sampleUsers.length > 0 ? Math.max(...sampleUsers.map(u => u.id)) + 1 : 1,
+                    prenom,
+                    nom,
+                    initiales: initiales.toUpperCase(),
+                    email,
+                    role: fonction,
+                    isAdmin: false, // Default to not admin
+                    password
+                };
+
+                sampleUsers.push(newUser);
+                createAccountForm.reset();
+                showNotification("Compte créé avec succès !");
+
+                if (cameFromPage === 'page-admin') {
+                    createAccountPage.style.display = 'none';
+                    appContainer.style.display = 'flex';
+                    renderUsersTable();
+                    populateUserDropdowns();
+                    showPage('page-admin');
+                } else {
+                    createAccountPage.style.display = 'none';
+                    loginPage.style.display = 'flex';
+                }
+            });
+
+
+            // --- INITIALISATION AU CHARGEMENT ---
+            function initApp() {
+                renderDashboard();
+                renderDossiersTable();
+                renderUsersTable();
+                populateUserDropdowns();
+                renderEcheances();
+                renderRecapCards();
+                renderTodoList();
+                showPage('page-dashboard');
+            }
+
+            // Pour le développement, on se connecte automatiquement en admin
+            currentUser = sampleUsers.find(u => u.isAdmin);
+            if (currentUser) {
+                loginPage.style.display = 'none';
+                appContainer.style.display = 'flex';
+                initApp();
+            }
+
+        });
+    </script>
+</body>
+</html>
+
